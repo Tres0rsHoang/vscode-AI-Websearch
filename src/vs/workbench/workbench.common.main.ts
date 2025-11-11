@@ -12,7 +12,6 @@ import './browser/workbench.contribution.js';
 
 //#endregion
 
-
 //#region --- workbench actions
 
 import './browser/actions/textInputActions.js';
@@ -29,7 +28,6 @@ import './browser/actions/widgetNavigationCommands.js';
 
 //#endregion
 
-
 //#region --- API Extension Points
 
 import './services/actions/common/menusExtensionPoint.js';
@@ -37,7 +35,6 @@ import './api/common/configurationExtensionPoint.js';
 import './api/browser/viewsExtensionPoint.js';
 
 //#endregion
-
 
 //#region --- workbench parts
 
@@ -48,7 +45,6 @@ import './browser/parts/banner/bannerPart.js';
 import './browser/parts/statusbar/statusbarPart.js';
 
 //#endregion
-
 
 //#region --- workbench services
 
@@ -181,7 +177,6 @@ registerSingleton(IAllowedMcpServersService, AllowedMcpServersService, Instantia
 
 //#endregion
 
-
 //#region --- workbench contributions
 
 // Telemetry
@@ -207,6 +202,9 @@ import './contrib/inlineChat/browser/inlineChat.contribution.js';
 import './contrib/mcp/browser/mcp.contribution.js';
 import './contrib/chat/browser/chatSessions.contribution.js';
 import './contrib/chat/browser/chatContext.contribution.js';
+
+// AI Websearch
+import './contrib/aiWebsearch/browser/aiWebSearch.contribution.js';
 
 // Interactive
 import './contrib/interactive/browser/interactive.contribution.js';

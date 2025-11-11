@@ -10,7 +10,6 @@ import { URI } from './uri.js';
 import * as paths from './path.js';
 
 export namespace Schemas {
-
 	/**
 	 * A schema that is used for models that exist in memory
 	 * only and that have no correspondence on a server or such.
@@ -156,6 +155,11 @@ export namespace Schemas {
 	 * Used for rendering multidiffs in copilot agent sessions
 	 */
 	export const copilotPr = 'copilot-pr';
+
+	/**
+	 * Used for open AI browser in new tab
+	 */
+	export const aiBr = 'ai-browser';
 }
 
 export function matchesScheme(target: URI | string, scheme: string): boolean {
@@ -167,7 +171,7 @@ export function matchesScheme(target: URI | string, scheme: string): boolean {
 }
 
 export function matchesSomeScheme(target: URI | string, ...schemes: string[]): boolean {
-	return schemes.some(scheme => matchesScheme(target, scheme));
+	return schemes.some((scheme) => matchesScheme(target, scheme));
 }
 
 export const connectionTokenCookieName = 'vscode-tkn';
@@ -238,7 +242,7 @@ class RemoteAuthoritiesImpl {
 			scheme: platform.isWeb ? this._preferredWebSchema : Schemas.vscodeRemoteResource,
 			authority: `${host}:${port}`,
 			path: this._remoteResourcesPath,
-			query
+			query,
 		});
 	}
 }
@@ -252,13 +256,33 @@ export function getServerProductSegment(product: { quality?: string; commit?: st
 /**
  * A string pointing to a path inside the app. It should not begin with ./ or ../
  */
-export type AppResourcePath = (
-	`a${string}` | `b${string}` | `c${string}` | `d${string}` | `e${string}` | `f${string}`
-	| `g${string}` | `h${string}` | `i${string}` | `j${string}` | `k${string}` | `l${string}`
-	| `m${string}` | `n${string}` | `o${string}` | `p${string}` | `q${string}` | `r${string}`
-	| `s${string}` | `t${string}` | `u${string}` | `v${string}` | `w${string}` | `x${string}`
-	| `y${string}` | `z${string}`
-);
+export type AppResourcePath =
+	| `a${string}`
+	| `b${string}`
+	| `c${string}`
+	| `d${string}`
+	| `e${string}`
+	| `f${string}`
+	| `g${string}`
+	| `h${string}`
+	| `i${string}`
+	| `j${string}`
+	| `k${string}`
+	| `l${string}`
+	| `m${string}`
+	| `n${string}`
+	| `o${string}`
+	| `p${string}`
+	| `q${string}`
+	| `r${string}`
+	| `s${string}`
+	| `t${string}`
+	| `u${string}`
+	| `v${string}`
+	| `w${string}`
+	| `x${string}`
+	| `y${string}`
+	| `z${string}`;
 
 export const builtinExtensionsPath: AppResourcePath = 'vs/../../extensions';
 export const nodeModulesPath: AppResourcePath = 'vs/../../node_modules';
@@ -268,7 +292,6 @@ export const nodeModulesAsarUnpackedPath: AppResourcePath = 'vs/../../node_modul
 export const VSCODE_AUTHORITY = 'vscode-app';
 
 class FileAccessImpl {
-
 	private static readonly FALLBACK_AUTHORITY = VSCODE_AUTHORITY;
 
 	/**
@@ -298,12 +321,10 @@ class FileAccessImpl {
 		if (
 			// ...only ever for `file` resources
 			uri.scheme === Schemas.file &&
-			(
-				// ...and we run in native environments
-				platform.isNative ||
+			// ...and we run in native environments
+			(platform.isNative ||
 				// ...or web worker extensions on desktop
-				(platform.webWorkerOrigin === `${Schemas.vscodeFileResource}://${FileAccessImpl.FALLBACK_AUTHORITY}`)
-			)
+				platform.webWorkerOrigin === `${Schemas.vscodeFileResource}://${FileAccessImpl.FALLBACK_AUTHORITY}`)
 		) {
 			return uri.with({
 				scheme: Schemas.vscodeFileResource,
@@ -313,7 +334,7 @@ class FileAccessImpl {
 				// add our own
 				authority: uri.authority || FileAccessImpl.FALLBACK_AUTHORITY,
 				query: null,
-				fragment: null
+				fragment: null,
 			});
 		}
 
@@ -343,7 +364,7 @@ class FileAccessImpl {
 				// Windows UNC paths that come with their own authority.
 				authority: uri.authority !== FileAccessImpl.FALLBACK_AUTHORITY ? uri.authority : null,
 				query: null,
-				fragment: null
+				fragment: null,
 			});
 		}
 
@@ -375,15 +396,14 @@ class FileAccessImpl {
 export const FileAccess = new FileAccessImpl();
 
 export const CacheControlheaders: Record<string, string> = Object.freeze({
-	'Cache-Control': 'no-cache, no-store'
+	'Cache-Control': 'no-cache, no-store',
 });
 
 export const DocumentPolicyheaders: Record<string, string> = Object.freeze({
-	'Document-Policy': 'include-js-call-stacks-in-crash-reports'
+	'Document-Policy': 'include-js-call-stacks-in-crash-reports',
 });
 
 export namespace COI {
-
 	const coiHeaders = new Map<'3' | '2' | '1' | string, Record<string, string>>([
 		['1', { 'Cross-Origin-Opener-Policy': 'same-origin' }],
 		['2', { 'Cross-Origin-Embedder-Policy': 'require-corp' }],
@@ -417,7 +437,11 @@ export namespace COI {
 	 * Add the `vscode-coi` query attribute based on wanting `COOP` and `COEP`. Will be a noop when `crossOriginIsolated`
 	 * isn't enabled the current context
 	 */
-	export function addSearchParam(urlOrSearch: URLSearchParams | Record<string, string>, coop: boolean, coep: boolean): void {
+	export function addSearchParam(
+		urlOrSearch: URLSearchParams | Record<string, string>,
+		coop: boolean,
+		coep: boolean,
+	): void {
 		// eslint-disable-next-line local/code-no-any-casts
 		if (!(<any>globalThis).crossOriginIsolated) {
 			// depends on the current context being COI

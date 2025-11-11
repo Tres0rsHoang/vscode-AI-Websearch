@@ -3,9 +3,9 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+import * as nls from '../../nls.js';
 import { Emitter, Event } from './event.js';
 import { Disposable, IDisposable } from './lifecycle.js';
-import * as nls from '../../nls.js';
 
 export interface ITelemetryData {
 	readonly from?: string;
@@ -58,9 +58,10 @@ export interface IActionChangeEvent {
  * Note that in most cases you should use the lighter-weight {@linkcode toAction} function instead.
  */
 export class Action extends Disposable implements IAction {
-
 	protected _onDidChange = this._register(new Emitter<IActionChangeEvent>());
-	get onDidChange() { return this._onDidChange.event; }
+	get onDidChange() {
+		return this._onDidChange.event;
+	}
 
 	protected readonly _id: string;
 	protected _label: string;
@@ -171,12 +172,15 @@ export interface IRunEvent {
 }
 
 export class ActionRunner extends Disposable implements IActionRunner {
-
 	private readonly _onWillRun = this._register(new Emitter<IRunEvent>());
-	get onWillRun() { return this._onWillRun.event; }
+	get onWillRun() {
+		return this._onWillRun.event;
+	}
 
 	private readonly _onDidRun = this._register(new Emitter<IRunEvent>());
-	get onDidRun() { return this._onDidRun.event; }
+	get onDidRun() {
+		return this._onDidRun.event;
+	}
 
 	async run(action: IAction, context?: unknown): Promise<void> {
 		if (!action.enabled) {
@@ -201,7 +205,6 @@ export class ActionRunner extends Disposable implements IActionRunner {
 }
 
 export class Separator implements IAction {
-
 	/**
 	 * Joins all non-empty lists of actions with separators.
 	 */
@@ -233,7 +236,6 @@ export class Separator implements IAction {
 }
 
 export class SubmenuAction implements IAction {
-
 	readonly id: string;
 	readonly label: string;
 	readonly class: string | undefined;
@@ -242,7 +244,9 @@ export class SubmenuAction implements IAction {
 	readonly checked: undefined = undefined;
 
 	private readonly _actions: readonly IAction[];
-	get actions(): readonly IAction[] { return this._actions; }
+	get actions(): readonly IAction[] {
+		return this._actions;
+	}
 
 	constructor(id: string, label: string, actions: readonly IAction[], cssClass?: string) {
 		this.id = id;
@@ -255,7 +259,6 @@ export class SubmenuAction implements IAction {
 }
 
 export class EmptySubmenuAction extends Action {
-
 	static readonly ID = 'vs.actions.empty';
 
 	constructor() {
@@ -274,3 +277,4 @@ export function toAction(props: { id: string; label: string; tooltip?: string; e
 		run: async (...args: unknown[]) => props.run(...args),
 	};
 }
+
