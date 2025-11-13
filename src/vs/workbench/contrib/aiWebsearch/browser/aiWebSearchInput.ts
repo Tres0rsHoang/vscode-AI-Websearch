@@ -7,34 +7,28 @@ import { Codicon } from '../../../../base/common/codicons.js';
 import { Schemas } from '../../../../base/common/network.js';
 import { URI } from '../../../../base/common/uri.js';
 import { localize } from '../../../../nls.js';
-import { IEditorOptions } from '../../../../platform/editor/common/editor.js';
 import { registerIcon } from '../../../../platform/theme/common/iconRegistry.js';
 import { IUntypedEditorInput } from '../../../common/editor.js';
 import { EditorInput } from '../../../common/editor/editorInput.js';
 
-export const aiWebsearchIcon = registerIcon(
-	'ai-websearch-icon',
-	Codicon.sparkle,
-	localize('aiWebsearchIcon', 'AI WebSearch icon'),
-);
 
-export type Message = {
+export const aiWebsearchIcon = registerIcon('ai-websearch-icon', Codicon.sparkle, localize('aiWebsearchIcon', 'AI WebSearch icon'));
+
+export type MessageData = {
+	role: 'user' | 'assistant';
 	content: string;
-	time: Date;
-	isAi: boolean;
 };
 
-export interface AIWebsearchEditorOptions extends IEditorOptions {
-	currentURL?: string;
-	messages: Message[];
-}
-
-export class AIWebsearchEditorInput extends EditorInput {
+export class AIWebSearchEditorInput extends EditorInput {
 	static readonly ID = 'workbench.editorinputs.aiWebsearchInput';
 	static readonly RESOURCE = URI.from({ scheme: Schemas.aiBr, authority: 'web-search' });
 
+	constructor(public readonly url: string, public messages: MessageData[] = []) {
+		super();
+	}
+
 	override get typeId(): string {
-		return AIWebsearchEditorInput.ID;
+		return AIWebSearchEditorInput.ID;
 	}
 
 	override get editorId(): string | undefined {
@@ -43,16 +37,16 @@ export class AIWebsearchEditorInput extends EditorInput {
 
 	override toUntyped(): IUntypedEditorInput {
 		return {
-			resource: AIWebsearchEditorInput.RESOURCE,
+			resource: AIWebSearchEditorInput.RESOURCE,
 			options: {
-				override: AIWebsearchEditorInput.ID,
-				pinned: false,
+				override: AIWebSearchEditorInput.ID,
+				pinned: true,
 			},
 		};
 	}
 
 	get resource(): URI | undefined {
-		return AIWebsearchEditorInput.RESOURCE;
+		return AIWebSearchEditorInput.RESOURCE;
 	}
 
 	override matches(other: EditorInput | IUntypedEditorInput): boolean {
@@ -60,7 +54,7 @@ export class AIWebsearchEditorInput extends EditorInput {
 			return true;
 		}
 
-		return other instanceof AIWebsearchEditorInput;
+		return other instanceof AIWebSearchEditorInput;
 	}
 
 	override getName() {

@@ -12,16 +12,18 @@ import { Action, IAction } from '../../../../base/common/actions.js';
 import * as arrays from '../../../../base/common/arrays.js';
 import { Cache, CacheResult } from '../../../../base/common/cache.js';
 import { CancellationToken, CancellationTokenSource } from '../../../../base/common/cancellation.js';
+import { Codicon } from '../../../../base/common/codicons.js';
+import { fromNow } from '../../../../base/common/date.js';
 import { isCancellationError } from '../../../../base/common/errors.js';
 import { Emitter, Event } from '../../../../base/common/event.js';
 import { KeyCode, KeyMod } from '../../../../base/common/keyCodes.js';
 import { Disposable, DisposableStore, MutableDisposable, dispose, toDisposable } from '../../../../base/common/lifecycle.js';
 import { Schemas, matchesScheme } from '../../../../base/common/network.js';
 import { isNative } from '../../../../base/common/platform.js';
+import { ThemeIcon } from '../../../../base/common/themables.js';
 import { isUndefined } from '../../../../base/common/types.js';
 import { URI } from '../../../../base/common/uri.js';
 import { generateUuid } from '../../../../base/common/uuid.js';
-import './media/extensionEditor.css';
 import { EditorContextKeys } from '../../../../editor/common/editorContextKeys.js';
 import { TokenizationRegistry } from '../../../../editor/common/languages.js';
 import { ILanguageService } from '../../../../editor/common/languages/language.js';
@@ -30,9 +32,12 @@ import { localize } from '../../../../nls.js';
 import { Action2, registerAction2 } from '../../../../platform/actions/common/actions.js';
 import { ContextKeyExpr, IContextKey, IContextKeyService, IScopedContextKeyService, RawContextKey } from '../../../../platform/contextkey/common/contextkey.js';
 import { IContextMenuService } from '../../../../platform/contextview/browser/contextView.js';
-import { computeSize, FilterType, IExtensionGalleryService, IGalleryExtension, ILocalExtension } from '../../../../platform/extensionManagement/common/extensionManagement.js';
+import { IExtensionGalleryManifestService } from '../../../../platform/extensionManagement/common/extensionGalleryManifest.js';
+import { FilterType, IExtensionGalleryService, IGalleryExtension, ILocalExtension, computeSize } from '../../../../platform/extensionManagement/common/extensionManagement.js';
 import { areSameExtensions } from '../../../../platform/extensionManagement/common/extensionManagementUtil.js';
 import { ExtensionType, IExtensionManifest } from '../../../../platform/extensions/common/extensions.js';
+import { ByteSize, IFileService } from '../../../../platform/files/common/files.js';
+import { IHoverService } from '../../../../platform/hover/browser/hover.js';
 import { IInstantiationService, ServicesAccessor } from '../../../../platform/instantiation/common/instantiation.js';
 import { KeybindingWeight } from '../../../../platform/keybinding/common/keybindingsRegistry.js';
 import { INotificationService } from '../../../../platform/notification/common/notification.js';
@@ -42,55 +47,51 @@ import { ITelemetryService } from '../../../../platform/telemetry/common/telemet
 import { defaultCheckboxStyles } from '../../../../platform/theme/browser/defaultStyles.js';
 import { buttonForeground, buttonHoverBackground, editorBackground, textLinkActiveForeground, textLinkForeground } from '../../../../platform/theme/common/colorRegistry.js';
 import { IColorTheme, ICssStyleCollector, IThemeService, registerThemingParticipant } from '../../../../platform/theme/common/themeService.js';
+import { IUriIdentityService } from '../../../../platform/uriIdentity/common/uriIdentity.js';
+import { IUserDataProfilesService } from '../../../../platform/userDataProfile/common/userDataProfile.js';
 import { EditorPane } from '../../../browser/parts/editor/editorPane.js';
 import { IEditorOpenContext } from '../../../common/editor.js';
+import { IEditorGroup } from '../../../services/editor/common/editorGroupsService.js';
+import { IEditorService } from '../../../services/editor/common/editorService.js';
+import { IExtensionRecommendationsService } from '../../../services/extensionRecommendations/common/extensionRecommendations.js';
+import { IExtensionService } from '../../../services/extensions/common/extensions.js';
+import { IRemoteAgentService } from '../../../services/remote/common/remoteAgentService.js';
+import { DEFAULT_MARKDOWN_STYLES, renderMarkdownDocument } from '../../markdown/browser/markdownDocumentRenderer.js';
+import { ShowCurrentReleaseNotesActionId } from '../../update/common/update.js';
+import { IWebview, IWebviewService, KEYBINDING_CONTEXT_WEBVIEW_FIND_WIDGET_FOCUSED } from '../../webview/browser/webview.js';
+import { ExtensionContainers, ExtensionEditorTab, ExtensionState, IExtension, IExtensionContainer, IExtensionsWorkbenchService } from '../common/extensions.js';
+import { ExtensionsInput, IExtensionEditorOptions } from '../common/extensionsInput.js';
 import { ExtensionFeaturesTab } from './extensionFeaturesTab.js';
 import {
 	ButtonWithDropDownExtensionAction,
+	ButtonWithDropdownExtensionActionViewItem,
 	ClearLanguageAction,
 	DisableDropDownAction,
+	DropDownExtensionAction,
 	EnableDropDownAction,
-	ButtonWithDropdownExtensionActionViewItem, DropDownExtensionAction,
 	ExtensionEditorManageExtensionAction,
+	ExtensionRuntimeStateAction,
 	ExtensionStatusAction,
 	ExtensionStatusLabelAction,
 	InstallAnotherVersionAction,
 	InstallDropdownAction, InstallingLabelAction,
 	LocalInstallAction,
 	MigrateDeprecatedExtensionAction,
-	ExtensionRuntimeStateAction,
 	RemoteInstallAction,
 	SetColorThemeAction,
 	SetFileIconThemeAction,
 	SetLanguageAction,
 	SetProductIconThemeAction,
 	ToggleAutoUpdateForExtensionAction,
+	TogglePreReleaseExtensionAction,
 	UninstallAction,
 	UpdateAction,
 	WebInstallAction,
-	TogglePreReleaseExtensionAction,
 } from './extensionsActions.js';
 import { Delegate } from './extensionsList.js';
 import { ExtensionData, ExtensionsGridView, ExtensionsTree, getExtensions } from './extensionsViewer.js';
-import { ExtensionRecommendationWidget, ExtensionStatusWidget, ExtensionWidget, InstallCountWidget, RatingsWidget, RemoteBadgeWidget, SponsorWidget, PublisherWidget, onClick, ExtensionKindIndicatorWidget, ExtensionIconWidget } from './extensionsWidgets.js';
-import { ExtensionContainers, ExtensionEditorTab, ExtensionState, IExtension, IExtensionContainer, IExtensionsWorkbenchService } from '../common/extensions.js';
-import { ExtensionsInput, IExtensionEditorOptions } from '../common/extensionsInput.js';
-import { DEFAULT_MARKDOWN_STYLES, renderMarkdownDocument } from '../../markdown/browser/markdownDocumentRenderer.js';
-import { IWebview, IWebviewService, KEYBINDING_CONTEXT_WEBVIEW_FIND_WIDGET_FOCUSED } from '../../webview/browser/webview.js';
-import { IEditorGroup } from '../../../services/editor/common/editorGroupsService.js';
-import { IEditorService } from '../../../services/editor/common/editorService.js';
-import { IExtensionRecommendationsService } from '../../../services/extensionRecommendations/common/extensionRecommendations.js';
-import { IExtensionService } from '../../../services/extensions/common/extensions.js';
-import { IUriIdentityService } from '../../../../platform/uriIdentity/common/uriIdentity.js';
-import { IHoverService } from '../../../../platform/hover/browser/hover.js';
-import { ByteSize, IFileService } from '../../../../platform/files/common/files.js';
-import { IUserDataProfilesService } from '../../../../platform/userDataProfile/common/userDataProfile.js';
-import { IRemoteAgentService } from '../../../services/remote/common/remoteAgentService.js';
-import { IExtensionGalleryManifestService } from '../../../../platform/extensionManagement/common/extensionGalleryManifest.js';
-import { ShowCurrentReleaseNotesActionId } from '../../update/common/update.js';
-import { ThemeIcon } from '../../../../base/common/themables.js';
-import { Codicon } from '../../../../base/common/codicons.js';
-import { fromNow } from '../../../../base/common/date.js';
+import { ExtensionIconWidget, ExtensionKindIndicatorWidget, ExtensionRecommendationWidget, ExtensionStatusWidget, ExtensionWidget, InstallCountWidget, PublisherWidget, RatingsWidget, RemoteBadgeWidget, SponsorWidget, onClick } from './extensionsWidgets.js';
+import './media/extensionEditor.css';
 
 class NavBar extends Disposable {
 
